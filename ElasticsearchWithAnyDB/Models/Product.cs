@@ -50,6 +50,50 @@ namespace ElasticsearchWithAnyDB.Models
         [JsonProperty(PropertyName = "top100_old")]
         public int PromoID { get; set; }
 
+        #region Only for Serialization
+
+        //NOTE: This code is required to use property names for serialization, rather than [JsonProperty(PropertyName = "...")]
+
+        public bool ShouldSerializeParentID() => false;
+        public bool ShouldSerializePriceB2B() => false;
+        public bool ShouldSerializePriceB2C() => false;
+        public bool ShouldSerializePriceWholesale() => false;
+        public bool ShouldSerializeWholesalePacking() => false;
+        public bool ShouldSerializeVideoUrl() => false;
+        public bool ShouldSerializeLimitOrderDays() => false;
+        public bool ShouldSerializeVolume() => false;
+        public bool ShouldSerializeVolumeLimit() => false;
+        public bool ShouldSerializeVolumeIncrementLimit() => false;
+        public bool ShouldSerializePromoID() => false;
+       
+        [JsonProperty(nameof(ParentID))]
+        private int ParentIDAlternateGetter => ParentID;
+        [JsonProperty(nameof(PriceB2B))]
+        private double PriceB2BAlternateGetter => PriceB2B;
+        [JsonProperty(nameof(PriceB2C))]
+        private double? PriceB2CAlternateGetter => PriceB2C;
+        [JsonProperty(nameof(PriceWholesale))]
+        private double? PriceWholesaleAlternateGetter => PriceWholesale;
+        [JsonProperty(nameof(WholesalePacking))]
+        private int WholesalePackingAlternateGetter => WholesalePacking;
+        [JsonProperty(nameof(VideoUrl))]
+        private string VideoUrlAlternateGetter => VideoUrl;
+        [JsonProperty(nameof(LimitOrderDays))]
+        private double? LimitOrderDaysAlternateGetter => LimitOrderDays;
+        [JsonProperty(nameof(Volume))]
+        private double? VolumeAlternateGetter => Volume;
+        [JsonProperty(nameof(VolumeLimit))]
+        private double? VolumeLimitAlternateGetter => VolumeLimit;
+        [JsonProperty(nameof(VolumeIncrementLimit))]
+        private double? VolumeIncrementLimitAlternateGetter => VolumeIncrementLimit;
+        [JsonProperty(nameof(PromoID))]
+        private int PromoIDAlternateGetter => PromoID;
+
+        [OnSerializing]
+        private void OnSerializingMethod(StreamingContext context) => additionalData = null;
+
+        #endregion
+
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
         {
