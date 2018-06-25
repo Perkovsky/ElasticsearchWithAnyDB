@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Nest;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -18,6 +19,7 @@ namespace ElasticsearchWithAnyDB.Models
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
         [JsonProperty(PropertyName = "cat3_id")]
+        [Keyword(Name = nameof(ParentID))]
         public int ParentID { get; set; }
         public string Name { get; set; }
         [JsonProperty(PropertyName = "price")]

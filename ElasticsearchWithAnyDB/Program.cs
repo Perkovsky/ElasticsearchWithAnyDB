@@ -7,6 +7,7 @@ using System.Text;
 using System.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Nest;
 using ElasticsearchWithAnyDB.Models;
 using ElasticsearchWithAnyDB.Repositories;
 
@@ -61,9 +62,9 @@ namespace ElasticsearchWithAnyDB
 
             #region Memory repository
 
-            Print("Loading memory repository...");
-            repository = new MemoryRepository();
-            SearchAndPrintResult(repository, searchString, "Memory repository search", true);
+            //Print("Loading memory repository...");
+            //repository = new MemoryRepository();
+            //SearchAndPrintResult(repository, searchString, "Memory repository search", true);
 
             #endregion
 
@@ -95,9 +96,17 @@ namespace ElasticsearchWithAnyDB
 
             #region Elasticsearch repository
 
-            //Print("Loading FB repository...");
-            //repository = new FBRepository();
-            //SearchAndPrintResult(repository, searchString, "FB repository");
+            Print("Loading ES repository...");
+
+            var node = new Uri("http://localhost:9200");
+            var settings = new ConnectionSettings(node);
+            settings.ThrowExceptions(alwaysThrow: true);
+            settings.DisableDirectStreaming();
+            settings.PrettyJson();
+
+            var client = new ElasticClient(settings);
+            repository = new ESRepository(client);
+            SearchAndPrintResult(repository, searchString, "ES repository");
 
             #endregion
 
