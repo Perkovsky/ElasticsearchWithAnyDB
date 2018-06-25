@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ElasticsearchWithAnyDB.Models;
@@ -13,7 +14,32 @@ namespace ElasticsearchWithAnyDB
 {
     class Program
     {
-        private static void SearchAndPrintResult(IRepository repository, string stringSearch, string title)
+        private static void Print(string title, ConsoleColor textColor = ConsoleColor.White)
+        {
+            var defaultTextColor = Console.ForegroundColor;
+            Console.ForegroundColor = textColor;
+            Console.WriteLine(title);
+            Console.ForegroundColor = defaultTextColor;
+        }
+
+        private static void PrintSearchResult(string title, int count, double time)
+        {
+            var defaultTextColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"Title: {title}");
+            Console.ForegroundColor = defaultTextColor;
+            Console.WriteLine($"Time : {time} sec");
+            Console.WriteLine($"Count: {count}");
+        }
+
+        private static void PrintExtendedSearchResult(IEnumerable<Product> searchResult)
+        {
+            Console.WriteLine("Item(s):");
+            foreach (var item in searchResult)
+                Console.WriteLine($"\tID: {item.Id} \tParentID: {item.ParentID}   \tPrice: {item.PriceB2B} \tName: {HttpUtility.HtmlDecode(item.Name)}");
+        }
+
+        private static void SearchAndPrintResult(IRepository repository, string stringSearch, string title, bool printExtendedResult = false)
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -21,13 +47,9 @@ namespace ElasticsearchWithAnyDB
             var count = result.Count();
             sw.Stop();
 
-            //foreach (var item in res)
-            //    Console.WriteLine($"ID: {item.Id}; Name: {item.Name}; Price: {item.PriceB2B}");
-
-            Console.WriteLine($"Title: {title}");
-            Console.WriteLine($"Count: {count}");
-            Console.WriteLine($"Time : {sw.Elapsed.TotalSeconds} sec");
-            Console.WriteLine(new string('-', 40));
+            PrintSearchResult(title, count, sw.Elapsed.TotalSeconds);
+            if (printExtendedResult)
+                PrintExtendedSearchResult(result);
         }
 
         static void Main(string[] args)
@@ -39,15 +61,15 @@ namespace ElasticsearchWithAnyDB
 
             #region Memory repository
 
-            //Console.WriteLine("Loading memory repository...");
-            //repository = new MemoryRepository();
-            //SearchAndPrintResult(repository, searchString, "Memory repository search");
+            Print("Loading memory repository...");
+            repository = new MemoryRepository();
+            SearchAndPrintResult(repository, searchString, "Memory repository search", true);
 
             #endregion
 
             #region EF repository
 
-            //Console.WriteLine("Loading EF repository...");
+            //Print("Loading EF repository...");
             //IConfigurationRoot config = new ConfigurationBuilder()
             //    .SetBasePath(Directory.GetCurrentDirectory())
             //    .AddJsonFile("appsettings.json")
@@ -65,7 +87,7 @@ namespace ElasticsearchWithAnyDB
 
             #region FB repository
 
-            //Console.WriteLine("Loading FB repository...");
+            //Print("Loading FB repository...");
             //repository = new FBRepository();
             //SearchAndPrintResult(repository, searchString, "FB repository");
 
@@ -73,14 +95,13 @@ namespace ElasticsearchWithAnyDB
 
             #region Elasticsearch repository
 
-            //Console.WriteLine("Loading FB repository...");
+            //Print("Loading FB repository...");
             //repository = new FBRepository();
             //SearchAndPrintResult(repository, searchString, "FB repository");
 
             #endregion
 
-
-            Console.WriteLine("DONE! PRESS ANY KEY...");
+            Print($"{Environment.NewLine}DONE! PRESS ANY KEY...");
             Console.ReadKey();
         }
     }
