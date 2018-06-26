@@ -49,8 +49,7 @@ namespace ElasticsearchWithAnyDB.Models
         public int BrandProductId { get; set; }
 
         //BUG: не загружается в индекс объект !!! ИСПРАВИТЬ !!! 
-        [Nested(Name = nameof(BrandProduct), IncludeInParent = true, Enabled = true, Ignore = true)]
-        //[Object]
+        [Nested(Name = nameof(BrandProduct), IncludeInParent = true)]
         public Brand BrandProduct { get; set; }
 
         [JsonProperty(PropertyName = "video")]
@@ -145,10 +144,14 @@ namespace ElasticsearchWithAnyDB.Models
 
             if (!string.IsNullOrEmpty((string)additionalData["brandId"]))
             {
+                int code1C = (int)additionalData["brandId"];
+                string nameBrand = (string)additionalData["brand"];
+
                 BrandProduct = new Brand
                 {
-                    Code1C = (int)additionalData["brandId"],
-                    Name = (string)additionalData["brand"]
+                    Id = (code1C > 0) ? code1C : 1,
+                    Code1C = (code1C > 0) ? code1C : 1,
+                    Name = (string.IsNullOrEmpty(nameBrand)) ? "-" : nameBrand
                 };
             }
         }

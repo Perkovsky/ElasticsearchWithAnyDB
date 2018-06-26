@@ -120,7 +120,7 @@ namespace ElasticsearchWithAnyDB
             var client = new ElasticClient(settings);
             
             // search
-            repository = new ESRepository(client/*, true*/);
+            repository = new ESRepository(client, true);
             SearchAndPrintResult(repository, searchString, "ES repository");
 
             // get products by parent ID

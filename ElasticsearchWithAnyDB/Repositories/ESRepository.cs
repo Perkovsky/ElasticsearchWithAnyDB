@@ -94,9 +94,13 @@ namespace ElasticsearchWithAnyDB.Repositories
         {
             if (IsIndexExists()) return null;
 
-            var result = client.CreateIndex(INDEX_NAME, i =>
-                i.Mappings(ms => ms
-                    .Map<Product>(m => m.AutoMap())));
+            var result = client.CreateIndex(INDEX_NAME, i => i
+                .Mappings(ms => ms
+                    .Map<Product>(m => m
+                        .AutoMap()
+                    )
+                )
+            );
 
             if (!result.IsValid)
             {
