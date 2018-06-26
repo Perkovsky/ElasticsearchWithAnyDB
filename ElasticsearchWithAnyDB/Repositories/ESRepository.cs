@@ -8,23 +8,21 @@ namespace ElasticsearchWithAnyDB.Repositories
 {
     public class ESRepository : BaseRepository, IRepository
     {
-        private const string INDEX_NAME = "products";
+        public const string INDEX_NAME = "products";
 
         private readonly IElasticClient client;
 
-        // Результаты тестирова скорости поиска (метод Search):
-        // Тип IEnumerable<Product> :  14,2348343 sec
-        // Тип IQueryable<Product>  :  4,8152637 sec
-        //
-        // P.S.
-        //  Для типа IEnumerable<Product> сначала срабатывает полная выборка,
-        //  а только потом сам поиск
-        //
-        public override IQueryable<Product> Products => client.Search<Product>(s => s).Documents.AsQueryable();
+        public override int TotalItems => 0;
 
-        public ESRepository(IElasticClient client)
+        public override IQueryable<Product> Products => throw new NotImplementedException();
+
+        public ESRepository(IElasticClient client, bool deleteIndex = false)
         {
             this.client = client;
+
+            if (deleteIndex)
+                DeleteIndex();
+
             SeedData();
         }
 
@@ -34,8 +32,6 @@ namespace ElasticsearchWithAnyDB.Repositories
 
         public void SeedData()
         {
-            DeleteIndex();
-
             if (IsIndexExists()) return;
 
             CreateIndex();
@@ -57,8 +53,7 @@ namespace ElasticsearchWithAnyDB.Repositories
 
         public override IEnumerable<Product> Search(string stringSearch)
         {
-            //string stringSearchToUpper = stringSearch.ToUpper();
-            return client.Search<Product>(s => s
+            return client.Search<Product>(s => s.Size(1000)
                 .Query(q => q
                     .QueryString(qs => qs.Query(stringSearch))))
                         .Documents;

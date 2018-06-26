@@ -7,6 +7,7 @@ namespace ElasticsearchWithAnyDB.Repositories
     public interface IRepository
     {
         IQueryable<Product> Products { get; }
+        int TotalItems { get; }
 
         void SaveProduct(Product product);
 

@@ -12,6 +12,7 @@ namespace ElasticsearchWithAnyDB.Repositories
         private readonly string FILE_NAME = "products.json";
         private readonly string FILE_NAME_ARCH = "products.zip";
 
+        public virtual int TotalItems => Products.Count();
         public virtual IQueryable<Product> Products => new List<Product>().AsQueryable();
 
         private void ExtractZip()

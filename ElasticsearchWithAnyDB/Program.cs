@@ -23,14 +23,15 @@ namespace ElasticsearchWithAnyDB
             Console.ForegroundColor = defaultTextColor;
         }
 
-        private static void PrintSearchResult(string title, int count, double time)
+        private static void PrintSearchResult(string title, int totalItems, int searchItems, double time)
         {
             var defaultTextColor = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Title: {title}");
+            Console.WriteLine($"Title  : {title}");
             Console.ForegroundColor = defaultTextColor;
-            Console.WriteLine($"Time : {time} sec");
-            Console.WriteLine($"Count: {count}");
+            Console.WriteLine($"Time   : {time} sec");
+            Console.WriteLine($"Total  : {totalItems} item(s)");
+            Console.WriteLine($"Search : {searchItems} item(s)");
         }
 
         private static void PrintExtendedSearchResult(IEnumerable<Product> searchResult)
@@ -48,7 +49,7 @@ namespace ElasticsearchWithAnyDB
             var count = result.Count();
             sw.Stop();
 
-            PrintSearchResult(title, count, sw.Elapsed.TotalSeconds);
+            PrintSearchResult(title, repository.TotalItems, count, sw.Elapsed.TotalSeconds);
             if (printExtendedResult)
                 PrintExtendedSearchResult(result);
         }
@@ -59,6 +60,11 @@ namespace ElasticsearchWithAnyDB
 
             IRepository repository;
             string searchString = "лопата";
+
+            IConfigurationRoot config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .Build();
 
             #region Memory repository
 
@@ -71,10 +77,6 @@ namespace ElasticsearchWithAnyDB
             #region EF repository
 
             //Print("Loading EF repository...");
-            //IConfigurationRoot config = new ConfigurationBuilder()
-            //    .SetBasePath(Directory.GetCurrentDirectory())
-            //    .AddJsonFile("appsettings.json")
-            //    .Build();
 
             //var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
             //var options = optionsBuilder.UseSqlServer(config.GetConnectionString("StozharyProducts")).Options;
@@ -98,15 +100,15 @@ namespace ElasticsearchWithAnyDB
 
             Print("Loading ES repository...");
 
-            var node = new Uri("http://localhost:9200");
-            var settings = new ConnectionSettings(node);
+            var settings = new ConnectionSettings(new Uri(config["Elasticsearch:Uri"]));
             settings.ThrowExceptions(alwaysThrow: true);
             settings.DisableDirectStreaming();
-            settings.PrettyJson();
+            settings.DefaultIndex(ESRepository.INDEX_NAME);
+            settings.PrettyJson(); // good for DEBUG
 
             var client = new ElasticClient(settings);
-            repository = new ESRepository(client);
-            SearchAndPrintResult(repository, searchString, "ES repository");
+            repository = new ESRepository(client, true);
+            SearchAndPrintResult(repository, searchString, "ES repository", true);
 
             #endregion
 
