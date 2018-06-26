@@ -118,9 +118,9 @@ namespace ElasticsearchWithAnyDB
             settings.PrettyJson(); // good for DEBUG
 
             var client = new ElasticClient(settings);
+            repository = new ESRepository(client);
             
             // search
-            repository = new ESRepository(client, true);
             SearchAndPrintResult(repository, searchString, "ES repository");
 
             // get products by parent ID

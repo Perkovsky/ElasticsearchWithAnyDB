@@ -1,10 +1,17 @@
-﻿namespace ElasticsearchWithAnyDB.Models
+﻿using Nest;
+
+namespace ElasticsearchWithAnyDB.Models
 {
     public class Brand
     {
+        [Ignore]
         public int Id { get; set; } // for EF autoincrement
-        public string Name { get; set; }
+
+        [Number(Name = nameof(Id), Index = false, IgnoreMalformed = true, Coerce = true)]
         public int Code1C { get; set; }
+
+        [Text(Name = nameof(Name))]
+        public string Name { get; set; }
 
         public override bool Equals(object obj)
         {

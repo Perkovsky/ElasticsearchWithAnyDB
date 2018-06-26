@@ -8,7 +8,7 @@ namespace ElasticsearchWithAnyDB.Repositories
 {
     public class ESRepository : BaseRepository, IRepository
     {
-        public const string INDEX_NAME = "products";
+        public const string INDEX_NAME = "mainindex";
 
         private readonly IElasticClient client;
 
@@ -30,19 +30,9 @@ namespace ElasticsearchWithAnyDB.Repositories
 
             CreateIndex();
 
-            IEnumerable<Product> loadData = base.LoadProductsFromFile();
-            var result = client.IndexMany(loadData);
-
-            if (!result.IsValid)
-            {
-                var defaultTextColor = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.Red;
-                foreach (var item in result.ItemsWithErrors)
-                    Console.WriteLine("Failed to index document {0}: {1}", item.Id, item.Error);
-
-                Console.WriteLine(result.DebugInformation);
-                Console.ForegroundColor = defaultTextColor;
-            }
+            //NOTE: При вызове метода 'client.IndexMany(<ALL_PRODUCTS>)' на больших объемах выдает исключение
+            //      РЕШЕНИЕ: необходимо загружать порциями (размер порции устанавливается опытным путем)      
+            SeedDataInParts();
         }
 
         public override IEnumerable<Product> Search(string stringSearch)
@@ -117,6 +107,33 @@ namespace ElasticsearchWithAnyDB.Repositories
         {
             if (IsIndexExists())
                 client.DeleteIndex(INDEX_NAME);
+        }
+
+        private void SeedDataInParts(int partSize = 10000)
+        {
+            IEnumerable<Product> loadData = base.LoadProductsFromFile();
+            int totalItems = loadData.Count();
+            int skipItems = 0;
+
+            while (totalItems > skipItems)
+            {
+                var part = loadData.Skip(skipItems)
+                                   .Take(partSize);
+
+                skipItems += partSize;
+                var result = client.IndexMany(part);
+
+                if (!result.IsValid)
+                {
+                    var defaultTextColor = Console.ForegroundColor;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    foreach (var item in result.ItemsWithErrors)
+                        Console.WriteLine("Failed to index document {0}: {1}", item.Id, item.Error);
+
+                    Console.WriteLine(result.DebugInformation);
+                    Console.ForegroundColor = defaultTextColor;
+                }
+            }
         }
 
         #endregion

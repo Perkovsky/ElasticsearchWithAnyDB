@@ -8,6 +8,7 @@ using System.Runtime.Serialization;
 
 namespace ElasticsearchWithAnyDB.Models
 {
+    [ElasticsearchType(Name = "products")]
     public class Product
     {
         [JsonExtensionData]
@@ -45,11 +46,10 @@ namespace ElasticsearchWithAnyDB.Models
 
         public StatusProduct StatusProduct { get; set; }
 
-        [Number(Ignore = true)]
+        [Ignore]
         public int BrandProductId { get; set; }
 
-        //BUG: не загружается в индекс объект !!! ИСПРАВИТЬ !!! 
-        [Nested(Name = nameof(BrandProduct), IncludeInParent = true)]
+        [Nested(Name = nameof(BrandProduct))]
         public Brand BrandProduct { get; set; }
 
         [JsonProperty(PropertyName = "video")]
@@ -144,14 +144,10 @@ namespace ElasticsearchWithAnyDB.Models
 
             if (!string.IsNullOrEmpty((string)additionalData["brandId"]))
             {
-                int code1C = (int)additionalData["brandId"];
-                string nameBrand = (string)additionalData["brand"];
-
                 BrandProduct = new Brand
                 {
-                    Id = (code1C > 0) ? code1C : 1,
-                    Code1C = (code1C > 0) ? code1C : 1,
-                    Name = (string.IsNullOrEmpty(nameBrand)) ? "-" : nameBrand
+                    Code1C = (int)additionalData["brandId"],
+                    Name = (string)additionalData["brand"]
                 };
             }
         }
