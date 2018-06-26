@@ -12,9 +12,7 @@ namespace ElasticsearchWithAnyDB.Repositories
 
         private readonly IElasticClient client;
 
-        public override int TotalItems => 0;
-
-        public override IQueryable<Product> Products => throw new NotImplementedException();
+        public override int TotalItems => (int)client.Search<Product>(s => s).Total;
 
         public ESRepository(IElasticClient client, bool deleteIndex = false)
         {
@@ -25,10 +23,6 @@ namespace ElasticsearchWithAnyDB.Repositories
 
             SeedData();
         }
-
-        public void SaveProduct(Product product) => throw new NotImplementedException();
-
-        public Product DeleteProduct(int productID) => throw new NotImplementedException();
 
         public void SeedData()
         {
@@ -53,11 +47,46 @@ namespace ElasticsearchWithAnyDB.Repositories
 
         public override IEnumerable<Product> Search(string stringSearch)
         {
-            return client.Search<Product>(s => s.Size(1000)
+            //TODO: если найденных товаров будет больше чем size, то они обрежутся до size, сделать паджинацию
+            int size = 1000;
+
+            return client.Search<Product>(s => s
+                .Size(size)
                 .Query(q => q
-                    .QueryString(qs => qs.Query(stringSearch))))
-                        .Documents;
+                    .QueryString(qs => qs
+                        .Query(stringSearch)
+                    )
+                )
+            ).Documents;
         }
+
+        public IEnumerable<Product> GetProductsByParentId(int parentId)
+        {
+            //TODO: если товаров в группе будет больше чем size, то они обрежутся до size, сделать паджинацию
+            int size = 1000;
+
+            return client.Search<Product>(s => s
+                    .Size(size)
+                    .Query(q => q
+                            .MultiMatch(m => m
+                                .Fields(f => f
+                                    .Field(p => p.ParentID))
+                                    .Query(parentId.ToString()
+                                )
+                            )
+                    )
+          ).Documents;
+        }
+
+        #region Not Implemented Methods and Properties
+
+        public override IQueryable<Product> Products => throw new NotImplementedException();
+        public void SaveProduct(Product product) => throw new NotImplementedException();
+        public Product DeleteProduct(int productID) => throw new NotImplementedException();
+
+        #endregion
+
+        #region Privates Methods
 
         private bool IsIndexExists() => client.IndexExists(INDEX_NAME).Exists;
 
@@ -85,5 +114,7 @@ namespace ElasticsearchWithAnyDB.Repositories
             if (IsIndexExists())
                 client.DeleteIndex(INDEX_NAME);
         }
+
+        #endregion
     }
 }

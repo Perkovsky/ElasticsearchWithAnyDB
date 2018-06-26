@@ -36,7 +36,7 @@ namespace ElasticsearchWithAnyDB.Models
         public double PriceB2C { get; set; }
 
         [JsonProperty(PropertyName = "wholesale_price")]
-        [Number(Name = nameof(PriceWholesale), Index = false)]
+        [Number(Name = nameof(PriceWholesale), Index = false, IgnoreMalformed = true, Coerce = true)]
         public double? PriceWholesale { get; set; }
 
         [JsonProperty(PropertyName = "fold")]
@@ -45,10 +45,12 @@ namespace ElasticsearchWithAnyDB.Models
 
         public StatusProduct StatusProduct { get; set; }
 
-        [Number(Name = nameof(BrandProductId), Index = false)]
+        [Number(Ignore = true)]
         public int BrandProductId { get; set; }
 
-        [Nested]
+        //BUG: не загружается в индекс объект !!! ИСПРАВИТЬ !!! 
+        [Nested(Name = nameof(BrandProduct), IncludeInParent = true, Enabled = true, Ignore = true)]
+        //[Object]
         public Brand BrandProduct { get; set; }
 
         [JsonProperty(PropertyName = "video")]
@@ -68,23 +70,22 @@ namespace ElasticsearchWithAnyDB.Models
         public string Delivery { get; set; }
 
         [JsonProperty(PropertyName = "limit_order_days")]
-        [Number(Name = nameof(LimitOrderDays), Index = false)]
+        [Number(Name = nameof(LimitOrderDays), Index = false, IgnoreMalformed = true, Coerce = true)]
         public int? LimitOrderDays { get; set; }
 
-        [Number(Name = nameof(Weight), Index = false)]
+        [Number(Name = nameof(Weight), Index = false, IgnoreMalformed = true, Coerce = true)]
         public double? Weight { get; set; }
 
         [JsonProperty(PropertyName = "amount")]
-        [Number(Name = nameof(Volume), Index = false)]
+        [Number(Name = nameof(Volume), Index = false, IgnoreMalformed = true, Coerce = true)]
         public double? Volume { get; set; }
 
-        //BUG: выдает ошибку, если значение пустое !!! РАЗОБРАТЬСЯ !!!
         [JsonProperty(PropertyName = "amount_limit")]
-        [Number(Name = nameof(VolumeLimit), Index = false, Ignore = true)]
-        public double VolumeLimit { get; set; }
+        [Number(Name = nameof(VolumeLimit), Index = false, IgnoreMalformed = true, Coerce = true)]
+        public double? VolumeLimit { get; set; }
 
         [JsonProperty(PropertyName = "amount_growth_limit")]
-        [Number(Name = nameof(VolumeIncrementLimit), Index = false)]
+        [Number(Name = nameof(VolumeIncrementLimit), Index = false, IgnoreMalformed = true, Coerce = true)]
         public double? VolumeIncrementLimit { get; set; }
 
         [JsonProperty(PropertyName = "top100_old")]

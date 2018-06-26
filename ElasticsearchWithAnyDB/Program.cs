@@ -15,6 +15,14 @@ namespace ElasticsearchWithAnyDB
 {
     class Program
     {
+        private static void ClearCurrentConsoleLine()
+        {
+            int currentLineCursor = Console.CursorTop;
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write(new string(' ', Console.WindowWidth));
+            Console.SetCursorPosition(0, currentLineCursor);
+        }
+
         private static void Print(string title, ConsoleColor textColor = ConsoleColor.White)
         {
             var defaultTextColor = Console.ForegroundColor;
@@ -25,9 +33,12 @@ namespace ElasticsearchWithAnyDB
 
         private static void PrintSearchResult(string title, int totalItems, int searchItems, double time)
         {
+            Console.SetCursorPosition(0, Console.CursorTop - 1);
+            ClearCurrentConsoleLine();
+
             var defaultTextColor = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Title  : {title}");
+            Console.WriteLine(title);
             Console.ForegroundColor = defaultTextColor;
             Console.WriteLine($"Time   : {time} sec");
             Console.WriteLine($"Total  : {totalItems} item(s)");
@@ -70,7 +81,7 @@ namespace ElasticsearchWithAnyDB
 
             //Print("Loading memory repository...");
             //repository = new MemoryRepository();
-            //SearchAndPrintResult(repository, searchString, "Memory repository search", true);
+            //SearchAndPrintResult(repository, searchString, "Memory repository search");
 
             #endregion
 
@@ -107,8 +118,21 @@ namespace ElasticsearchWithAnyDB
             settings.PrettyJson(); // good for DEBUG
 
             var client = new ElasticClient(settings);
-            repository = new ESRepository(client, true);
-            SearchAndPrintResult(repository, searchString, "ES repository", true);
+            
+            // search
+            repository = new ESRepository(client/*, true*/);
+            SearchAndPrintResult(repository, searchString, "ES repository");
+
+            // get products by parent ID
+            int parentID = 43029/*197208*/;
+            var sw = new Stopwatch();
+            sw.Start();
+            var result = (repository as ESRepository).GetProductsByParentId(parentID);
+            sw.Stop();
+            Console.WriteLine();
+            PrintSearchResult($"Elasticsearch -> get products by ParentID={parentID}", 
+                repository.TotalItems, result.Count(), sw.Elapsed.TotalSeconds);
+            PrintExtendedSearchResult(result);
 
             #endregion
 
