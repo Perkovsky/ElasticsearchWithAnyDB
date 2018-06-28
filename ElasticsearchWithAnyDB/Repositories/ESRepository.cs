@@ -14,9 +14,15 @@ namespace ElasticsearchWithAnyDB.Repositories
 
         public override int TotalItems => (int)client.Search<Product>(s => s).Total;
 
-        public ESRepository(IElasticClient client, bool deleteIndex = false)
+        public ESRepository(string connectionStrings, bool deleteIndex = false)
         {
-            this.client = client;
+            var settings = new ConnectionSettings(new Uri(connectionStrings));
+            settings.ThrowExceptions(alwaysThrow: true);
+            settings.DisableDirectStreaming();
+            settings.DefaultIndex(ESRepository.INDEX_NAME);
+            settings.PrettyJson(); // good for DEBUG
+
+            client = new ElasticClient(settings);
 
             if (deleteIndex)
                 DeleteIndex();
@@ -50,7 +56,7 @@ namespace ElasticsearchWithAnyDB.Repositories
             ).Documents;
         }
 
-        public IEnumerable<Product> GetProductsByParentId(int parentId)
+        public override IEnumerable<Product> GetProducts(int parentId)
         {
             //TODO: если товаров в группе будет больше чем size, то они обрежутся до size, сделать паджинацию
             int size = 1000;

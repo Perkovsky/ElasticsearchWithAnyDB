@@ -65,12 +65,26 @@ namespace ElasticsearchWithAnyDB
                 PrintExtendedSearchResult(result);
         }
 
+        private static void GetProductsAndPrintResult(IRepository repository, int parentID, string title, bool printExtendedResult = false)
+        {
+            var sw = new Stopwatch();
+            sw.Start();
+            var result = repository.GetProducts(parentID);
+            sw.Stop();
+
+            Console.WriteLine();
+            PrintSearchResult(title, repository.TotalItems, result.Count(), sw.Elapsed.TotalSeconds);
+            if (printExtendedResult)
+                PrintExtendedSearchResult(result);
+        }
+
         static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
 
             IRepository repository;
             string searchString = "лопата";
+            int parentID = 43029/*197208*/;
 
             IConfigurationRoot config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -88,7 +102,6 @@ namespace ElasticsearchWithAnyDB
             #region EF repository
 
             //Print("Loading EF repository...");
-
             //var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
             //var options = optionsBuilder.UseSqlServer(config.GetConnectionString("StozharyProducts")).Options;
             //using (ApplicationDbContext context = new ApplicationDbContext(options))
@@ -110,29 +123,18 @@ namespace ElasticsearchWithAnyDB
             #region Elasticsearch repository
 
             Print("Loading ES repository...");
-
-            var settings = new ConnectionSettings(new Uri(config["Elasticsearch:Uri"]));
-            settings.ThrowExceptions(alwaysThrow: true);
-            settings.DisableDirectStreaming();
-            settings.DefaultIndex(ESRepository.INDEX_NAME);
-            settings.PrettyJson(); // good for DEBUG
-
-            var client = new ElasticClient(settings);
-            repository = new ESRepository(client);
-            
-            // search
+            repository = new ESRepository(config["Elasticsearch:Uri"]);
             SearchAndPrintResult(repository, searchString, "ES repository");
+            GetProductsAndPrintResult(repository, parentID, $"ES -> get products by ParentID={parentID}", true);
 
-            // get products by parent ID
-            int parentID = 43029/*197208*/;
-            var sw = new Stopwatch();
-            sw.Start();
-            var result = (repository as ESRepository).GetProductsByParentId(parentID);
-            sw.Stop();
-            Console.WriteLine();
-            PrintSearchResult($"Elasticsearch -> get products by ParentID={parentID}", 
-                repository.TotalItems, result.Count(), sw.Elapsed.TotalSeconds);
-            PrintExtendedSearchResult(result);
+            #endregion
+
+            #region MongoDB repository
+
+            //Print("Loading Mongo repository...");
+            //repository = new ESRepository(config["MongoDB:Uri"]);
+            //SearchAndPrintResult(repository, searchString, "Mongo repository");
+            //GetProductsAndPrintResult(repository, parentID, $"Mongo -> get products by ParentID={parentID}", true);
 
             #endregion
 

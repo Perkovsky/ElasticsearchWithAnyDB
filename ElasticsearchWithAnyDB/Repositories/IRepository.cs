@@ -16,6 +16,8 @@ namespace ElasticsearchWithAnyDB.Repositories
 
         IEnumerable<Product> Search(string searchString);
 
+        IEnumerable<Product> GetProducts(int parentId);
+
         void SeedData();
     }
 }

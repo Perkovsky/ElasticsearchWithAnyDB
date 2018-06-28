@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ICSharpCode.SharpZipLib.Zip;
@@ -14,6 +15,7 @@ namespace ElasticsearchWithAnyDB.Repositories
 
         public virtual int TotalItems => Products.Count();
         public virtual IQueryable<Product> Products => new List<Product>().AsQueryable();
+        public virtual IEnumerable<Product> GetProducts(int parentId) => throw new NotImplementedException();
 
         private void ExtractZip()
         {
