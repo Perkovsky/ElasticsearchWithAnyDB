@@ -82,7 +82,6 @@ namespace ElasticsearchWithAnyDB.Repositories
                         .Child(childKey)
                         .DeleteAsync();
 
-            //TODO: возвращать найденный product
             return new Product();
         }
     }

@@ -4,6 +4,7 @@ using ElasticsearchWithAnyDB.Models;
 
 namespace ElasticsearchWithAnyDB.Repositories
 {
+    //TODO: в реальном проекте все методы реализации сделать Async
     public interface IRepository
     {
         IQueryable<Product> Products { get; }

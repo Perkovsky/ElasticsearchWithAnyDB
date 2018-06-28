@@ -1,4 +1,5 @@
-﻿using Nest;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using Nest;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
@@ -47,6 +48,7 @@ namespace ElasticsearchWithAnyDB.Models
         public StatusProduct StatusProduct { get; set; }
 
         [Ignore]
+        [BsonIgnore]
         public int BrandProductId { get; set; }
 
         [Nested(Name = nameof(BrandProduct))]

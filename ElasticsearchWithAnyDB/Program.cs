@@ -7,7 +7,6 @@ using System.Text;
 using System.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Nest;
 using ElasticsearchWithAnyDB.Models;
 using ElasticsearchWithAnyDB.Repositories;
 
@@ -122,19 +121,19 @@ namespace ElasticsearchWithAnyDB
 
             #region Elasticsearch repository
 
-            Print("Loading ES repository...");
-            repository = new ESRepository(config["Elasticsearch:Uri"]);
-            SearchAndPrintResult(repository, searchString, "ES repository");
-            GetProductsAndPrintResult(repository, parentID, $"ES -> get products by ParentID={parentID}", true);
+            //Print("Loading ES repository...");
+            //repository = new ESRepository(config["Elasticsearch:Uri"]);
+            //SearchAndPrintResult(repository, searchString, "ES repository");
+            //GetProductsAndPrintResult(repository, parentID, $"ES -> get products by ParentID={parentID}", true);
 
             #endregion
 
             #region MongoDB repository
 
-            //Print("Loading Mongo repository...");
-            //repository = new ESRepository(config["MongoDB:Uri"]);
-            //SearchAndPrintResult(repository, searchString, "Mongo repository");
-            //GetProductsAndPrintResult(repository, parentID, $"Mongo -> get products by ParentID={parentID}", true);
+            Print("Loading Mongo repository...");
+            repository = new MongoRepository(config["MongoDB:Uri"]);
+            SearchAndPrintResult(repository, searchString, "Mongo repository");
+            GetProductsAndPrintResult(repository, parentID, $"Mongo -> get products by ParentID={parentID}", true);
 
             #endregion
 
