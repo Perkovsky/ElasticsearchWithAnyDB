@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using ElasticsearchWithAnyDB.Models;
 using ElasticsearchWithAnyDB.Services;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace ElasticsearchWithAnyDB
@@ -19,28 +20,21 @@ namespace ElasticsearchWithAnyDB
                 .AddJsonFile("appsettings.json")
                 .Build();
 
-			// PrintService
 			var printService = new PrintService();
-			// MongoService
-			MongoSettings mongoSettings = new MongoSettings();
-			config.Bind(nameof(MongoSettings), mongoSettings);
-			var mongoService = new MongoService(mongoSettings, printService);
-			// ElasticsearchService
 			ElasticsearchSettings elasticsearchSettings = new ElasticsearchSettings();
 			config.Bind(nameof(ElasticsearchSettings), elasticsearchSettings);
-			var elasticsearchService = new ElasticsearchService(elasticsearchSettings, printService, mongoService);
-			//elasticsearchService.DeleteIndex(); return;
-			elasticsearchService.SeedData(4990, 4990);
+			var elasticsearchService = new ElasticsearchService(elasticsearchSettings, printService);
+			//elasticsearchService.SeedData();
 
-			int parentId = 197208;
-			string search = "шампунь";
-
-			var result = elasticsearchService.GetProducts(parentId);
-			printService.PrintInfo($"Total products with parentId={parentId}: {result.Count()}", false);
-			//printService.PrintInfo(result);
-
-			result = elasticsearchService.Search(search);
-			printService.PrintInfo($"Total products founded by search='{search}': {result.Count()}", false);
+			var targets = new List<string> { "1", "1st", "first", "one", "One", "ONe", "First", "FIRST", "FiRsT", "2nd", "avenue", "Avenue" };
+			foreach (var item in targets)
+			{
+				string search = item;
+				var result = elasticsearchService.Search(search);
+				printService.PrintInfo(result);
+				printService.PrintInfo($"Total products founded by search='{search}': {result.Count()}", false);
+				printService.PrintInfo(new string('-', 80) + Environment.NewLine, false);
+			}
 
 			printService.PrintInfo($"{Environment.NewLine}Press any key...", false);
 			Console.ReadKey();

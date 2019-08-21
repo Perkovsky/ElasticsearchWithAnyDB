@@ -2,7 +2,6 @@
 using Nest;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ElasticsearchWithAnyDB.Services
 {
@@ -11,12 +10,10 @@ namespace ElasticsearchWithAnyDB.Services
 		private readonly string indexName;
 		private readonly IElasticClient client;
 		private readonly IPrintService printService;
-		private readonly IMongoService mongoService;
 
-		public ElasticsearchService(IElasticsearchSettings appSettings, IPrintService printService, IMongoService mongoService)
+		public ElasticsearchService(IElasticsearchSettings appSettings, IPrintService printService)
 		{
 			this.printService = printService;
-			this.mongoService = mongoService;
 			indexName = appSettings.IndexName;
 
 			var settings = new ConnectionSettings(new Uri(appSettings.ConnectionString));
@@ -33,12 +30,53 @@ namespace ElasticsearchWithAnyDB.Services
 
 		private ICreateIndexResponse CreateIndex()
 		{
-			if (IsIndexExists()) return null;
+			DeleteIndex();
 
-			var result = client.CreateIndex(indexName, i => i
-				.Mappings(ms => ms
-					.Map<Product>(m => m
+			var result = client.CreateIndex(indexName, c => c
+				.Settings(s => s
+					.Analysis(a => a
+						.TokenFilters(tf => tf
+							.Stop("building_stop", sw => sw
+								.StopWords("avenue")
+							)
+						)
+						.CharFilters(cf => cf
+							.Mapping("building", mca => mca
+								.Mappings(new[]
+								{
+									"1 => first",
+									"1st => first",
+									"1-st => first",
+									"one => first",
+									"One => first"
+								})
+							)
+						)
+						.Analyzers(an => an
+							.Custom("index_building", ca => ca
+								.CharFilters("html_strip", "building")
+								.Tokenizer("standard")
+								.Filters("lowercase", "stop", "building_stop")
+								
+							)
+							.Custom("search_building", ca => ca
+								.CharFilters("building")
+								.Tokenizer("standard")
+								.Filters("lowercase", "stop", "building_stop")
+							)
+						)
+					)
+				)
+				.Mappings( ms => ms
+					.Map<Product>(mm => mm
 						.AutoMap()
+						.Properties(p => p
+							.Text(t => t
+								.Name(n => n.Name)
+								.Analyzer("index_building")
+								.SearchAnalyzer("search_building")
+							)
+						)
 					)
 				)
 			);
@@ -49,39 +87,36 @@ namespace ElasticsearchWithAnyDB.Services
 			return result;
 		}
 
-		private void SeedDataInParts(int? first, int partSize)
-		{
-			IEnumerable<Product> loadData = mongoService.GetProductsAsync().Result;
-			int totalItems = first ?? loadData.Count();
-			int skipItems = 0;
-
-			while (totalItems > skipItems)
-			{
-				var part = loadData.Skip(skipItems)
-					.Take(partSize);
-
-				skipItems += partSize;
-				var result = client.IndexMany(part);
-
-				if (!result.IsValid)
-				{
-					foreach (var item in result.ItemsWithErrors)
-						printService.PrintError($"Failed to index document {item.Id}: {item.Error}");
-				}
-			}
-		}
-
 		#endregion
 
-		//NOTE: При вызове метода 'client.IndexMany(<ALL_PRODUCTS>)' на больших объемах выдает исключение
-		// РЕШЕНИЕ: необходимо загружать порциями (размер порции устанавливается опытным путем)
-		public void SeedData(int? first = null, int partSize = 10000)
+		public void SeedData()
 		{
-			if (IsIndexExists()) return;
-
 			printService.PrintInfo("Started loading seed data to Elasticsearch...");
 			CreateIndex();
-			SeedDataInParts(first, partSize);
+			var loadData = new List<Product>
+			{
+				new Product { Id = 777771, Name = "1 avenue"},
+				new Product { Id = 777772, Name = "1st avenue"},
+				new Product { Id = 777773, Name = "1-st avenue"},
+				new Product { Id = 777774, Name = "First avenue"},
+				new Product { Id = 777775, Name = "first avenue"},
+				new Product { Id = 777776, Name = "One avenue"},
+				new Product { Id = 777777, Name = "one avenue"},
+				new Product { Id = 777778, Name = "2 avenue"},
+				new Product { Id = 777779, Name = "2nd avenue"},
+				new Product { Id = 777780, Name = "2-nd avenue"},
+				new Product { Id = 777781, Name = "Second avenue"},
+				new Product { Id = 777782, Name = "second avenue"},
+				new Product { Id = 777783, Name = "Two avenue"},
+				new Product { Id = 777784, Name = "two avenue"}
+			};
+
+			var result = client.IndexMany(loadData);
+			if (!result.IsValid)
+			{
+				foreach (var item in result.ItemsWithErrors)
+					printService.PrintError($"Failed to index document {item.Id}: {item.Error}");
+			}
 			printService.PrintInfo("Finished loading seed data to Elasticsearch.");
 		}
 
