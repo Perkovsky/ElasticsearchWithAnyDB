@@ -8,6 +8,8 @@ namespace ElasticsearchWithAnyDB.Services
 {
 	public class ElasticsearchService
 	{
+		private const string PRODUCT_SUGGESTION_NAME = "product-suggestions";
+
 		private readonly string indexName;
 		private readonly IElasticClient client;
 		private readonly IPrintService printService;
@@ -49,9 +51,22 @@ namespace ElasticsearchWithAnyDB.Services
 			return result;
 		}
 
+		private void SetSuggest(IEnumerable<Product> loadData)
+		{
+			printService.PrintInfo("Started setting Suggest for Elasticsearch...");
+			foreach (var item in loadData)
+			{
+				item.Suggest = new CompletionField
+				{
+					Input = new List<string>(item.Name.Split(' ')) { item.Name }
+				};
+			}
+		}
+
 		private void SeedDataInParts(int? first, int partSize)
 		{
 			IEnumerable<Product> loadData = mongoService.GetProductsAsync().Result;
+			SetSuggest(loadData);
 			int totalItems = first ?? loadData.Count();
 			int skipItems = 0;
 
@@ -104,6 +119,45 @@ namespace ElasticsearchWithAnyDB.Services
 					)
 				)
 			).Documents;
+		}
+
+		public IEnumerable<ProductSuggestion> Autocomlete(string search)
+		{
+			var products = client.Search<Product>(s => s
+				//.Index<Product>()
+				.Source(sf => sf
+					.Includes(f => f
+						.Field(ff => ff.Name)
+						.Field(ff => ff.Description)
+						.Field(ff => ff.Keywords)
+					)
+				)
+				.Suggest(su => su
+					.Completion(PRODUCT_SUGGESTION_NAME, c => c
+						.Prefix(search)
+						.Field(p => p.Suggest)
+						.Fuzzy(f => f
+							.Fuzziness(Fuzziness.Auto)
+						)
+						.Size(10)
+					)
+				)
+			);
+
+			printService.PrintInfo($"Autocomplete total: {products.Total}");
+
+			var result = products.Suggest[PRODUCT_SUGGESTION_NAME]
+				.FirstOrDefault()
+				.Options
+				.Select(suggest => new ProductSuggestion
+				{
+					Id = suggest.Source.Id,
+					Name = suggest.Source.Name,
+					Description = suggest.Source.Description,
+					Keywords = suggest.Source.Keywords
+				});
+
+			return result;
 		}
 
 		public IEnumerable<Product> GetProducts(int parentId)

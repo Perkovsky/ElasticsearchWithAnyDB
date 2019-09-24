@@ -32,15 +32,10 @@ namespace ElasticsearchWithAnyDB
 			//elasticsearchService.DeleteIndex(); return;
 			elasticsearchService.SeedData(4990, 4990);
 
-			int parentId = 197208;
 			string search = "шампунь";
 
-			var result = elasticsearchService.GetProducts(parentId);
-			printService.PrintInfo($"Total products with parentId={parentId}: {result.Count()}", false);
-			//printService.PrintInfo(result);
-
-			result = elasticsearchService.Search(search);
-			printService.PrintInfo($"Total products founded by search='{search}': {result.Count()}", false);
+			var result = elasticsearchService.Autocomlete(search);
+			printService.PrintInfo(result);
 
 			printService.PrintInfo($"{Environment.NewLine}Press any key...", false);
 			Console.ReadKey();

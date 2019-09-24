@@ -22,6 +22,13 @@ namespace ElasticsearchWithAnyDB.Services
 				Console.WriteLine($"\tID: {item.Id} \tParentID: {item.ParentId}   \tPrice: {item.Price} \tName: {HttpUtility.HtmlDecode(item.Name)}");
 		}
 
+		public void PrintInfo(IEnumerable<ProductSuggestion> items)
+		{
+			Console.WriteLine("Item(s):");
+			foreach (var item in items)
+				Console.WriteLine($"\tName: {HttpUtility.HtmlDecode(item.Name)}");
+		}
+
 		public void PrintError(string text)
 		{
 			var defaultTextColor = Console.ForegroundColor;

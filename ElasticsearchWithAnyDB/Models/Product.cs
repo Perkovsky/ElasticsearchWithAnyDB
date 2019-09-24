@@ -1,4 +1,5 @@
-﻿using Nest;
+﻿using System.Collections.Generic;
+using Nest;
 
 namespace ElasticsearchWithAnyDB.Models
 {
@@ -45,5 +46,18 @@ namespace ElasticsearchWithAnyDB.Models
 
 		[Number(Name = nameof(LimitOrderDays), Index = false, IgnoreMalformed = true, Coerce = true)]
         public int? LimitOrderDays { get; set; }
-    }
+
+		// Elasticsearch -> Autocomplete
+		public CompletionField Suggest { get; set; }
+
+		//TODO: fix NullReferenceException into MongoService.GetProductsAsync()
+		//
+		//public Product()
+		//{
+		//	Suggest = new CompletionField
+		//	{
+		//		Input = new List<string>(Name.Split(' ')) { Name }
+		//	};
+		//}
+	}
 }
