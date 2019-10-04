@@ -105,23 +105,5 @@ namespace ElasticsearchWithAnyDB.Services
 				)
 			).Documents;
 		}
-
-		public IEnumerable<Product> GetProducts(int parentId)
-		{
-			//TODO: если товаров в группе будет больше чем size, то они обрежутся до size, сделать паджинацию
-			int size = 1000;
-
-			return client.Search<Product>(s => s
-					.Size(size)
-					.Query(q => q
-							.MultiMatch(m => m
-								.Fields(f => f
-									.Field(p => p.ParentId))
-									.Query(parentId.ToString()
-								)
-							)
-					)
-		  ).Documents;
-		}
 	}
 }

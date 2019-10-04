@@ -29,17 +29,12 @@ namespace ElasticsearchWithAnyDB
 			ElasticsearchSettings elasticsearchSettings = new ElasticsearchSettings();
 			config.Bind(nameof(ElasticsearchSettings), elasticsearchSettings);
 			var elasticsearchService = new ElasticsearchService(elasticsearchSettings, printService, mongoService);
-			//elasticsearchService.DeleteIndex(); return;
+			elasticsearchService.DeleteIndex();// return;
 			elasticsearchService.SeedData(4990, 4990);
 
-			int parentId = 197208;
 			string search = "шампунь";
 
-			var result = elasticsearchService.GetProducts(parentId);
-			printService.PrintInfo($"Total products with parentId={parentId}: {result.Count()}", false);
-			//printService.PrintInfo(result);
-
-			result = elasticsearchService.Search(search);
+			var result = elasticsearchService.Search(search);
 			printService.PrintInfo($"Total products founded by search='{search}': {result.Count()}", false);
 
 			printService.PrintInfo($"{Environment.NewLine}Press any key...", false);

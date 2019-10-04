@@ -19,7 +19,7 @@ namespace ElasticsearchWithAnyDB.Services
 		{
 			Console.WriteLine("Item(s):");
 			foreach (var item in items)
-				Console.WriteLine($"\tID: {item.Id} \tParentID: {item.ParentId}   \tPrice: {item.Price} \tName: {HttpUtility.HtmlDecode(item.Name)}");
+				Console.WriteLine($"\tID: {item.Id} \tPrice: {item.Price} \tName: {HttpUtility.HtmlDecode(item.Name)}");
 		}
 
 		public void PrintError(string text)

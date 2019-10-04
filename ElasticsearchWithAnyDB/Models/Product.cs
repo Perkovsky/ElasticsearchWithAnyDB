@@ -1,49 +1,48 @@
 ﻿using Nest;
+using System;
 
 namespace ElasticsearchWithAnyDB.Models
 {
-    [ElasticsearchType(Name = "products")]
-    public class Product
-    {
-        [Number(Name = nameof(Id))]
-        public int Id { get; set; }
+	[ElasticsearchType(Name = "products")]
+	public class Product
+	{
+		[Number(Name = nameof(Id))]
+		public int Id { get; set; }
 
-        [Keyword(Name = nameof(ParentId))]
-        public int ParentId { get; set; }
+		[Keyword(Name = nameof(Name))]
+		public string Name { get; set; }
 
-        [Text(Name = nameof(Name))]
-        public string Name { get; set; }
+		[Keyword(Name = nameof(Group))]
+		public string Group { get; set; }
 
-        [Number(Name = nameof(Price), Index = false)]
-        public double Price { get; set; }
+		[Number(Name = nameof(Price), Index = false)]
+		public decimal Price { get; set; }
 
-        public StatusProduct StatusProduct { get; set; }
+		[Number(Name = nameof(Amount), Index = false)]
+		public decimal Amount { get; set; }
 
-        [Nested(Name = nameof(BrandProduct))]
-        public Brand BrandProduct { get; set; }
+		[Date(Name = nameof(DateCreated))]
+		public DateTime DateCreated { get; set; }
 
-		[Text(Name = nameof(PhotoUrl), Index = false)]
+		[Nested(Name = nameof(BrandProduct))]
+		public Brand BrandProduct { get; set; }
+	}
+
+	public class ProductMongo
+	{
+		public int Id { get; set; }
+		public int ParentId { get; set; }
+		public string Name { get; set; }
+		public double Price { get; set; }
+		public StatusProduct StatusProduct { get; set; }
+		public Brand BrandProduct { get; set; }
 		public string PhotoUrl { get; set; }
-
-		[Text(Name = nameof(PhotoUrlBig), Index = false)]
 		public string PhotoUrlBig { get; set; }
-
-        [Text(Name = nameof(VideoUrl), Index = false)]
-        public string VideoUrl { get; set; }
-
-        [Text(Name = nameof(Description))]
-        public string Description { get; set; }
-
-        [Text(Name = nameof(Keywords))]
-        public string Keywords { get; set; }
-
-        [Text(Name = nameof(Availability), Index = false)]
-        public string Availability { get; set; }
-
-        [Number(Name = nameof(WholesalePacking), Index = false, IgnoreMalformed = true, Coerce = true)]
-        public int? WholesalePacking { get; set; }
-
-		[Number(Name = nameof(LimitOrderDays), Index = false, IgnoreMalformed = true, Coerce = true)]
-        public int? LimitOrderDays { get; set; }
-    }
+		public string VideoUrl { get; set; }
+		public string Description { get; set; }
+		public string Keywords { get; set; }
+		public string Availability { get; set; }
+		public int? WholesalePacking { get; set; }
+		public int? LimitOrderDays { get; set; }
+	}
 }
