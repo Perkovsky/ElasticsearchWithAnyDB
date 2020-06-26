@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using ElasticsearchWithAnyDB.Models;
 using ElasticsearchWithAnyDB.Services;
 using System.Linq;
+using ServiceStack.Redis;
 
 namespace ElasticsearchWithAnyDB
 {
@@ -21,21 +22,24 @@ namespace ElasticsearchWithAnyDB
 
 			// PrintService
 			var printService = new PrintService();
-			// MongoService
-			MongoSettings mongoSettings = new MongoSettings();
-			config.Bind(nameof(MongoSettings), mongoSettings);
-			var mongoService = new MongoService(mongoSettings, printService);
-			// ElasticsearchService
-			ElasticsearchSettings elasticsearchSettings = new ElasticsearchSettings();
-			config.Bind(nameof(ElasticsearchSettings), elasticsearchSettings);
-			var elasticsearchService = new ElasticsearchService(elasticsearchSettings, printService, mongoService);
-			//elasticsearchService.DeleteIndex(); return;
-			elasticsearchService.SeedData(4990, 4990);
+			
+			// redis
+			var redisSettings = new RedisSettings();
+			config.Bind(nameof(RedisSettings), redisSettings);
 
-			string search = "шампунь";
-
-			var result = elasticsearchService.Autocomlete(search);
-			printService.PrintInfo(result);
+            // ConnectionString example: "password@host:6379"
+            var manager = new RedisManagerPool(redisSettings.ConnectionString);
+            using (var client = manager.GetClient())
+            {
+				// set
+				client.Set("fist-name", "John");
+				client.Set("last-name", "Dou");
+				client.Set("age", 25);
+				//get
+				printService.PrintInfo($"Fist name: {client.Get<string>("fist-name")}");
+                printService.PrintInfo($"Last name: {client.Get<string>("last-name")}");
+                printService.PrintInfo($"Age: {client.Get<int>("age")}");
+            }
 
 			printService.PrintInfo($"{Environment.NewLine}Press any key...", false);
 			Console.ReadKey();
