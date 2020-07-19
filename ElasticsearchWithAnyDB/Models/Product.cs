@@ -1,33 +1,5 @@
-﻿using Nest;
-using System;
-
-namespace ElasticsearchWithAnyDB.Models
+﻿namespace ElasticsearchWithAnyDB.Models
 {
-	[ElasticsearchType(Name = "products")]
-	public class Product
-	{
-		[Number(Name = nameof(Id))]
-		public int Id { get; set; }
-
-		[Keyword(Name = nameof(Name))]
-		public string Name { get; set; }
-
-		[Keyword(Name = nameof(Group))]
-		public string Group { get; set; }
-
-		[Number(Name = nameof(Price), Index = false)]
-		public decimal Price { get; set; }
-
-		[Number(Name = nameof(Amount), Index = false)]
-		public decimal Amount { get; set; }
-
-		[Date(Name = nameof(DateCreated))]
-		public DateTime DateCreated { get; set; }
-
-		[Nested(Name = nameof(BrandProduct))]
-		public Brand BrandProduct { get; set; }
-	}
-
 	public class ProductMongo
 	{
 		public int Id { get; set; }

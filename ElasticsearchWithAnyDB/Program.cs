@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using ElasticsearchWithAnyDB.Models;
 using ElasticsearchWithAnyDB.Services;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ElasticsearchWithAnyDB
 {
@@ -21,21 +22,21 @@ namespace ElasticsearchWithAnyDB
 
 			// PrintService
 			var printService = new PrintService();
+
 			// MongoService
 			MongoSettings mongoSettings = new MongoSettings();
 			config.Bind(nameof(MongoSettings), mongoSettings);
 			var mongoService = new MongoService(mongoSettings, printService);
-			// ElasticsearchService
-			ElasticsearchSettings elasticsearchSettings = new ElasticsearchSettings();
-			config.Bind(nameof(ElasticsearchSettings), elasticsearchSettings);
-			var elasticsearchService = new ElasticsearchService(elasticsearchSettings, printService, mongoService);
-			elasticsearchService.DeleteIndex();// return;
-			elasticsearchService.SeedData(4990, 4990);
-
-			string search = "шампунь";
-
-			var result = elasticsearchService.Search(search);
-			printService.PrintInfo($"Total products founded by search='{search}': {result.Count()}", false);
+			var collectionName = "groups";
+			mongoService.CopyToAsync<GroupMongo>(new CollectionCopy
+			{
+				DbNameFrom = "stozhary_api",
+				CollectionNameFrom = collectionName,
+				DbNameTo = "nodejs_api",
+				CollectionNameTo = collectionName
+			}).Wait();
+			var countDocuments = mongoService.CountAsync<GroupMongo>("nodejs_api", collectionName).Result;
+			printService.PrintInfo($"Total documents copied='{countDocuments}'.");
 
 			printService.PrintInfo($"{Environment.NewLine}Press any key...", false);
 			Console.ReadKey();

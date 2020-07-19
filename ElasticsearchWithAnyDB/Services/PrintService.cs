@@ -1,7 +1,4 @@
-﻿using ElasticsearchWithAnyDB.Models;
-using System;
-using System.Collections.Generic;
-using System.Web;
+﻿using System;
 
 namespace ElasticsearchWithAnyDB.Services
 {
@@ -13,13 +10,6 @@ namespace ElasticsearchWithAnyDB.Services
 				Console.WriteLine($"[{DateTime.Now.ToString("HH:mm:ss.fffff")}] - {text}");
 			else
 				Console.WriteLine(text);
-		}
-
-		public void PrintInfo(IEnumerable<Product> items)
-		{
-			Console.WriteLine("Item(s):");
-			foreach (var item in items)
-				Console.WriteLine($"\tID: {item.Id} \tPrice: {item.Price} \tName: {HttpUtility.HtmlDecode(item.Name)}");
 		}
 
 		public void PrintError(string text)

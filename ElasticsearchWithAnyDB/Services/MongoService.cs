@@ -9,33 +9,38 @@ namespace ElasticsearchWithAnyDB.Services
 {
 	public class MongoService : IMongoService
 	{
-		private readonly IPrintService printService;
-		private readonly IMongoCollection<ProductMongo> products;
+		private readonly IPrintService _printService;
+		private readonly MongoClient _client;
 
 		public MongoService(IMongoSettings settings, IPrintService printService)
 		{
-			this.printService = printService;
-			var client = new MongoClient(settings.ConnectionString);
-			var database = client.GetDatabase(settings.DatabaseName);
-			products = database.GetCollection<ProductMongo>(settings.ProductsCollectionName);
+			_printService = printService;
+			_client = new MongoClient(settings.ConnectionString);
 		}
 
-		public async Task<IEnumerable<Product>> GetProductsAsync()
+		public async Task CopyToAsync<T>(CollectionCopy copy)
 		{
-			printService.PrintInfo("Started loading all data from MongoDB...");
-			var documents = await products.FindAsync(x => true);
-			var result = documents.ToList().Select(x => new Product
-			{
-				Id = x.Id,
-				Name = x.Name,
-				BrandProduct = x.BrandProduct,
-				Price = (decimal)x.Price,
-				Group = $"Group-{x.ParentId}",
-				Amount = new Random().Next(1, 100),
-				DateCreated = DateTime.Now.AddMonths(new Random().Next(1, 20) * -1)
-			});
-			printService.PrintInfo("Finished loading all data from MongoDB.");
-			return result;
+			var dbNameFrom = copy.DbNameFrom;
+			var dbNameTo = copy.DbNameTo;
+			var collectionNameFrom = copy.CollectionNameFrom;
+			var collectionNameTo = copy.CollectionNameTo;
+
+			_printService.PrintInfo($"Started copying from '{dbNameFrom}->{collectionNameFrom}' to '{dbNameTo}->{collectionNameTo}'...");
+
+			var dbFrom = _client.GetDatabase(dbNameFrom);
+			var dbTo = _client.GetDatabase(dbNameTo);
+			var collectionFrom = dbFrom.GetCollection<T>(collectionNameFrom);
+			var collectionTo = dbTo.GetCollection<T>(collectionNameTo);
+
+			var result = await collectionFrom.FindAsync(x => true);
+			await collectionTo.InsertManyAsync(await result.ToListAsync());
+		}
+
+		public async Task<long> CountAsync<T>(string dbName, string collectionName)
+		{
+			var db = _client.GetDatabase(dbName);
+			var collection = db.GetCollection<T>(collectionName);
+			return await collection.CountDocumentsAsync(x => true);
 		}
 	}
 }
