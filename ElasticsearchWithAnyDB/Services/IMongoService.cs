@@ -1,12 +1,15 @@
 ﻿using ElasticsearchWithAnyDB.Models;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ElasticsearchWithAnyDB.Services
 {
 	public interface IMongoService
 	{
-		Task CopyToAsync<T>(CollectionCopy copy);
+		Task<IEnumerable<Group>> GetGroups();
 
-		Task<long> CountAsync<T>(string dbName, string collectionName);
+		Task<IEnumerable<Brand>> GetBrands(int[] parentId);
+
+		Task<IEnumerable<Product>> GetProducts(int[] parentId);
 	}
 }

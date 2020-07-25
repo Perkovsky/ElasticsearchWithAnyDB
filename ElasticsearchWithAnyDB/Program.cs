@@ -27,16 +27,30 @@ namespace ElasticsearchWithAnyDB
 			MongoSettings mongoSettings = new MongoSettings();
 			config.Bind(nameof(MongoSettings), mongoSettings);
 			var mongoService = new MongoService(mongoSettings, printService);
-			var collectionName = "groups";
-			mongoService.CopyToAsync<GroupMongo>(new CollectionCopy
+
+			using (ApplicationContext context = new ApplicationContext())
 			{
-				DbNameFrom = "stozhary_api",
-				CollectionNameFrom = collectionName,
-				DbNameTo = "nodejs_api",
-				CollectionNameTo = collectionName
-			}).Wait();
-			var countDocuments = mongoService.CountAsync<GroupMongo>("nodejs_api", collectionName).Result;
-			printService.PrintInfo($"Total documents copied='{countDocuments}'.");
+				printService.PrintInfo($"Started copying groups from MongoDB to PostgreSQL...");
+				var groups = mongoService.GetGroups().Result;
+				context.Groups.AddRange(groups);
+				context.SaveChanges();
+				printService.PrintInfo($"Total groups copied: {groups.Count()}.");
+
+				int[] parentIds = new int[] { 74848, 1093, 23029, 785, 137358 };
+
+				printService.PrintInfo($"Started copying brands from MongoDB to PostgreSQL...");
+				var brands = mongoService.GetBrands(parentIds).Result;
+				context.Brands.AddRange(brands);
+				context.SaveChanges();
+				printService.PrintInfo($"Total brands copied: {brands.Count()}.");
+
+				printService.PrintInfo($"Started copying products from MongoDB to PostgreSQL...");
+				var products = mongoService.GetProducts(parentIds).Result;
+				context.Products.AddRange(products);
+				context.SaveChanges();
+				printService.PrintInfo($"Total products copied: {products.Count()}.");
+
+			}
 
 			printService.PrintInfo($"{Environment.NewLine}Press any key...", false);
 			Console.ReadKey();

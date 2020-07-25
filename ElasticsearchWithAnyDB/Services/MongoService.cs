@@ -9,6 +9,8 @@ namespace ElasticsearchWithAnyDB.Services
 {
 	public class MongoService : IMongoService
 	{
+		private const string DB_NAME = "stozhary_api";
+
 		private readonly IPrintService _printService;
 		private readonly MongoClient _client;
 
@@ -18,29 +20,63 @@ namespace ElasticsearchWithAnyDB.Services
 			_client = new MongoClient(settings.ConnectionString);
 		}
 
-		public async Task CopyToAsync<T>(CollectionCopy copy)
+		public async Task<IEnumerable<Group>> GetGroups()
 		{
-			var dbNameFrom = copy.DbNameFrom;
-			var dbNameTo = copy.DbNameTo;
-			var collectionNameFrom = copy.CollectionNameFrom;
-			var collectionNameTo = copy.CollectionNameTo;
+			var db = _client.GetDatabase(DB_NAME);
+			var collection = db.GetCollection<GroupMongo>("groups");
+			var result = await collection.FindAsync(x => true);
 
-			_printService.PrintInfo($"Started copying from '{dbNameFrom}->{collectionNameFrom}' to '{dbNameTo}->{collectionNameTo}'...");
-
-			var dbFrom = _client.GetDatabase(dbNameFrom);
-			var dbTo = _client.GetDatabase(dbNameTo);
-			var collectionFrom = dbFrom.GetCollection<T>(collectionNameFrom);
-			var collectionTo = dbTo.GetCollection<T>(collectionNameTo);
-
-			var result = await collectionFrom.FindAsync(x => true);
-			await collectionTo.InsertManyAsync(await result.ToListAsync());
+			return result.ToList()
+				.Select(n => new Group
+				{
+					Id = n.Id,
+					ParentId = n.ParentId,
+					Name = n.Name,
+					Keywords = n.Keywords,
+					PhotoUrl = n.PhotoUrl
+				});
 		}
 
-		public async Task<long> CountAsync<T>(string dbName, string collectionName)
+		public async Task<IEnumerable<Brand>> GetBrands(int[] parentIds)
 		{
-			var db = _client.GetDatabase(dbName);
-			var collection = db.GetCollection<T>(collectionName);
-			return await collection.CountDocumentsAsync(x => true);
+			var db = _client.GetDatabase(DB_NAME);
+			var collection = db.GetCollection<ProductMongo>("products");
+			var result = await collection.FindAsync(x => parentIds.Contains(x.ParentId));
+			var comparer = new ComparerById<Brand>();
+
+			return result.ToList()
+				.Select(n => new Brand
+				{
+					Id = n.BrandProduct.Id,
+					Name = n.BrandProduct.Name
+				})
+				.Distinct(comparer);
+		}
+
+		public async Task<IEnumerable<Product>> GetProducts(int[] parentIds)
+		{
+			var db = _client.GetDatabase(DB_NAME);
+			var collection = db.GetCollection<ProductMongo>("products");
+			var result = await collection.FindAsync(x => parentIds.Contains(x.ParentId));
+
+			return result.ToList()
+				.Select(n => new Product
+				{
+					Id = n.Id,
+					Name = n.Name,
+					BrandId = n.BrandProduct.Id,
+					Availability = n.Availability,
+					Description = n.Description,
+					Keywords = n.Keywords,
+					LimitOrderDays = n.LimitOrderDays,
+					ParentId = n.ParentId,
+					PhotoUrl = n.PhotoUrl,
+					PhotoUrlBig = n.PhotoUrlBig,
+					Price = n.Price,
+					StatusProduct = n.StatusProduct,
+					VideoUrl = n.VideoUrl,
+					WholesalePacking = n.WholesalePacking
+				});
 		}
 	}
 }
