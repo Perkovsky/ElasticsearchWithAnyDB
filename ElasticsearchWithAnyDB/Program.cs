@@ -4,8 +4,7 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using ElasticsearchWithAnyDB.Models;
 using ElasticsearchWithAnyDB.Services;
-using System.Linq;
-using System.Threading.Tasks;
+using StackExchange.Redis;
 
 namespace ElasticsearchWithAnyDB
 {
@@ -23,34 +22,18 @@ namespace ElasticsearchWithAnyDB
 			// PrintService
 			var printService = new PrintService();
 
-			// MongoService
-			MongoSettings mongoSettings = new MongoSettings();
-			config.Bind(nameof(MongoSettings), mongoSettings);
-			var mongoService = new MongoService(mongoSettings, printService);
+			// Redis
+			var settings = new RedisSettings();
+			config.Bind(nameof(RedisSettings), settings);
+			var redis = ConnectionMultiplexer.Connect(settings.ConnectionString);
+			IDatabase redisDatabase = redis.GetDatabase();
 
-			using (ApplicationContext context = new ApplicationContext())
-			{
-				printService.PrintInfo($"Started copying groups from MongoDB to PostgreSQL...");
-				var groups = mongoService.GetGroups().Result;
-				context.Groups.AddRange(groups);
-				context.SaveChanges();
-				printService.PrintInfo($"Total groups copied: {groups.Count()}.");
+			var key = "192.168.0.127";
+			var result = redisDatabase.StringSet(key, "some simple text as value...");
+			var value = redisDatabase.StringGet(key);
+			//var value = await db.StringGetAsync(key, flags).ConfigureAwait(false);
 
-				int[] parentIds = new int[] { 74848, 1093, 23029, 785, 137358 };
-
-				printService.PrintInfo($"Started copying brands from MongoDB to PostgreSQL...");
-				var brands = mongoService.GetBrands(parentIds).Result;
-				context.Brands.AddRange(brands);
-				context.SaveChanges();
-				printService.PrintInfo($"Total brands copied: {brands.Count()}.");
-
-				printService.PrintInfo($"Started copying products from MongoDB to PostgreSQL...");
-				var products = mongoService.GetProducts(parentIds).Result;
-				context.Products.AddRange(products);
-				context.SaveChanges();
-				printService.PrintInfo($"Total products copied: {products.Count()}.");
-
-			}
+			printService.PrintInfo($"{key}: {value}", false);
 
 			printService.PrintInfo($"{Environment.NewLine}Press any key...", false);
 			Console.ReadKey();
